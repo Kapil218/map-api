@@ -1,107 +1,190 @@
 <template>
   <div class="autocomplete-container">
     <input
-      id="autocomplete"
-      type="text"
-      placeholder="Enter a location"
-      class="autocomplete-input"
+      ref="autocompleteInput"
       v-model="inputValue"
-      @input="onInput"
+      @input="handleInput"
+      placeholder="Type a location..."
+      class="autocomplete-input"
     />
-    <ul class="chips-list">
+
+    <ul v-if="showOptions" class="autocomplete-options">
       <li
-        v-for="component in addressComponents"
-        :key="component"
-        class="chip"
-        @click="selectPlace(component)"
+        v-for="(option, index) in autocompleteOptions"
+        :key="index"
+        @click="selectSuggestion(option)"
+        class="autocomplete-option"
       >
-        {{ component }}
+        {{ option.description }}
       </li>
     </ul>
+
+    <div class="output-fields">
+      <input
+        v-model="selectedPlace.state"
+        placeholder="State"
+        class="output-input"
+      />
+      <input
+        v-model="selectedPlace.country"
+        placeholder="Country"
+        class="output-input"
+      />
+      <input
+        v-model="selectedPlace.city"
+        placeholder="City"
+        class="output-input"
+      />
+      <input
+        v-model="selectedPlace.pincode"
+        placeholder="Pincode"
+        class="output-input"
+      />
+    </div>
   </div>
 </template>
-
 
 <script>
 export default {
   data() {
     return {
       inputValue: "",
-      addressComponents: [],
+      autocompleteOptions: [],
+      selectedPlace: {
+        state: "",
+        country: "",
+        city: "",
+        pincode: "",
+      },
+      showOptions: false,
+      autocompleteService: null,
     };
-  },
-  methods: {
-    selectPlace(component) {
-      console.log(component);
-      this.inputValue = component;
-      this.addressComponents = [];
-    },
-    onInput() {
-      const autocompleteService =
-        new window.google.maps.places.AutocompleteService();
-      autocompleteService.getPlacePredictions(
-        { input: this.inputValue },
-        this.displayPredictions
-      );
-    },
-    displayPredictions(predictions, status) {
-      if (status === window.google.maps.places.PlacesServiceStatus.OK) {
-        // Display the predictions
-        console.log(predictions);
-        this.addressComponents = predictions.map(
-          (prediction) => prediction.description
-        );
-      }
-    },
-
-    initializeGoogleServices() {
-      // Now you can safely access the 'google' object
-      this.onInput();
-    },
   },
   mounted() {
-    // Load the Google Maps JavaScript API script here
+    // Load Google Places API script
     const script = document.createElement("script");
-    script.src =
-      "https://maps.googleapis.com/maps/api/js?key=AIzaSyAldn0pDQzYAGR5KQ4oMXFjqSgByWVzWvk&libraries=places";
-    script.onload = () => {
-      this.initializeGoogleServices();
-    };
+    script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyAldn0pDQzYAGR5KQ4oMXFjqSgByWVzWvk&libraries=places`;
+    script.onload = this.initAutocomplete;
     document.head.appendChild(script);
+  },
+  methods: {
+    initAutocomplete() {
+      // Initialize Google Places Autocomplete service
+      this.autocompleteService =
+        new window.google.maps.places.AutocompleteService();
+    },
+    handleInput() {
+      if (this.inputValue.length > 0) {
+        this.autocompleteService.getPlacePredictions(
+          {
+            input: this.inputValue,
+            types: ["geocode"],
+          },
+          this.handlePredictions
+        );
+      } else {
+        this.autocompleteOptions = [];
+      }
+    },
+    handlePredictions(predictions, status) {
+      if (status === window.google.maps.places.PlacesServiceStatus.OK) {
+        this.autocompleteOptions = predictions;
+        this.showOptions = true;
+      } else {
+        this.autocompleteOptions = [];
+      }
+    },
+    selectSuggestion(option) {
+      const service = new window.google.maps.places.PlacesService(
+        document.createElement("div")
+      );
+      service.getDetails(
+        {
+          placeId: option.place_id,
+          fields: ["address_components"],
+        },
+        (place, status) => {
+          if (status === window.google.maps.places.PlacesServiceStatus.OK) {
+            this.selectedPlace.state = this.extractAddressComponent(
+              place,
+              "administrative_area_level_1"
+            );
+            this.selectedPlace.country = this.extractAddressComponent(
+              place,
+              "country"
+            );
+            this.selectedPlace.city = this.extractAddressComponent(
+              place,
+              "locality"
+            );
+            this.selectedPlace.pincode = this.extractAddressComponent(
+              place,
+              "postal_code"
+            );
+            this.inputValue = option.description;
+            this.showOptions = false;
+          }
+        }
+      );
+    },
+    extractAddressComponent(place, componentType) {
+      const component = place.address_components.find((comp) =>
+        comp.types.includes(componentType)
+      );
+      return component ? component.long_name : "";
+    },
   },
 };
 </script>
+
 <style>
 .autocomplete-container {
   position: relative;
-  width: 300px; /* Adjust as needed */
-  margin: 20px auto;
+  width: 300px;
+  margin: auto;
+  padding: 20px;
 }
 
 .autocomplete-input {
   width: 100%;
   padding: 10px;
+  font-size: 16px;
   border: 1px solid #ccc;
   border-radius: 4px;
 }
 
-.chips-list {
+.autocomplete-options {
   list-style: none;
-  padding: 0 0;
-  margin: 0 0;
+  padding: 0;
+  margin: 0;
+  border: 1px solid #ccc;
+  position: absolute;
+  background-color: white;
+  z-index: 1000;
+  width: 100%;
 }
 
-.chip {
-  display: inline-block;
-  background-color: #f0f0f0;
-  color: #333;
-  padding: 5px 10px;
-  margin: 5px;
-  border-radius: 4px;
-  font-size: 14px;
-}
-.chip:hover {
+.autocomplete-option {
+  padding: 10px;
   cursor: pointer;
+  border-bottom: 1px solid #ccc;
+  transition: background-color 0.2s;
 }
-/* Additional styling as needed */
+
+.autocomplete-option:hover {
+  background-color: #f0f0f0;
+}
+
+.output-fields {
+  margin-top: 20px;
+}
+
+.output-input {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
 </style>
