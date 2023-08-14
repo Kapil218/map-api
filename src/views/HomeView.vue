@@ -1,6 +1,8 @@
 <template>
   <div class="autocomplete-container">
-    <input
+    <v-text-field
+      label="Location"
+      outlined
       ref="autocompleteInput"
       v-model="inputValue"
       @input="handleInput"
@@ -20,24 +22,32 @@
     </ul>
 
     <div class="output-fields">
-      <input
-        v-model="selectedPlace.state"
-        placeholder="State"
-        class="output-input"
-      />
-      <input
+      <v-text-field
+        label="Country"
+        outlined
         v-model="selectedPlace.country"
         placeholder="Country"
         class="output-input"
       />
-      <input
-        v-model="selectedPlace.city"
-        placeholder="City"
+      <v-text-field
+        label="State"
+        v-model="selectedPlace.state"
+        placeholder="State"
+        outlined
         class="output-input"
       />
-      <input
+      <v-text-field
+        label="City"
+        v-model="selectedPlace.city"
+        placeholder="City"
+        outlined
+        class="output-input"
+      />
+      <v-text-field
+        label="Pincode"
         v-model="selectedPlace.pincode"
         placeholder="Pincode"
+        outlined
         class="output-input"
       />
     </div>
@@ -149,7 +159,6 @@ export default {
   width: 100%;
   padding: 10px;
   font-size: 16px;
-  border: 1px solid #ccc;
   border-radius: 4px;
 }
 
@@ -167,7 +176,6 @@ export default {
 .autocomplete-option {
   padding: 10px;
   cursor: pointer;
-  border-bottom: 1px solid #ccc;
   transition: background-color 0.2s;
 }
 
@@ -184,7 +192,6 @@ export default {
   padding: 10px;
   margin-top: 5px;
   font-size: 16px;
-  border: 1px solid #ccc;
   border-radius: 4px;
 }
 </style>
