@@ -134,7 +134,6 @@ export default {
         },
         (place, status) => {
           if (status === window.google.maps.places.PlacesServiceStatus.OK) {
-            console.log("Place Details:", place);
             const state = this.extractAddressComponent(
               place,
               "administrative_area_level_1"
@@ -184,11 +183,13 @@ export default {
                 country,
                 city,
                 pincodes: [pincode],
+                areas: [area],
               });
               this.selectedPlace.state = state;
               this.selectedPlace.country = country;
               this.selectedPlace.city = city;
               this.selectedPlace.pincode = pincode;
+              this.selectedPlace.area = area;
             }
             // logic for pincode
             this.inputValue = option.description;
@@ -196,6 +197,7 @@ export default {
           }
         }
       );
+      console.log(this.selectedPlace);
     },
     extractAddressComponent(place, componentType) {
       const component = place.address_components.find((comp) =>
