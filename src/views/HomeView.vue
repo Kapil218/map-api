@@ -75,7 +75,7 @@ export default {
         country: "",
         city: "",
         pincode: "",
-        area: "", // Add the 'area' property
+        area: "",
       },
       showOptions: false,
       autocompleteService: null,
@@ -93,7 +93,6 @@ export default {
       this.inputValue = "";
       this.autocompleteOptions = [];
       this.showOptions = false;
-      // Clear other selectedPlace values if needed
     },
     initAutocomplete() {
       // Initialize Google Places Autocomplete service
@@ -236,12 +235,3 @@ export default {
   border-radius: 4px;
 }
 </style>
-
-
-
-selectSuggestion(option) {
-  // ... (your existing code)
-
-
-  // ... (your existing code)
-},
