@@ -116,7 +116,7 @@ export default {
       if (status === window.google.maps.places.PlacesServiceStatus.OK) {
         this.autocompleteOptions = predictions.map((prediction) => ({
           ...prediction,
-          description: prediction.structured_formatting.main_text,
+          description: prediction.description,
         }));
         this.showOptions = true;
       } else {
@@ -134,6 +134,7 @@ export default {
         },
         (place, status) => {
           if (status === window.google.maps.places.PlacesServiceStatus.OK) {
+            console.log("Place Details:", place);
             const state = this.extractAddressComponent(
               place,
               "administrative_area_level_1"
@@ -150,7 +151,7 @@ export default {
                 place.country === country &&
                 place.city === city
             );
-
+            // logic for area
             if (existingPlace) {
               if (!existingPlace.areas.includes(area)) {
                 existingPlace.areas.push(area);
@@ -170,7 +171,26 @@ export default {
               this.selectedPlace.pincode = pincode;
               this.selectedPlace.area = area;
             }
-
+            // logic for area
+            // logic for pincode
+            if (existingPlace) {
+              if (!existingPlace.pincodes.includes(pincode)) {
+                existingPlace.pincodes.push(pincode);
+                this.selectedPlace.pincode = existingPlace.pincodes.join(", ");
+              }
+            } else {
+              this.savedPlaces.push({
+                state,
+                country,
+                city,
+                pincodes: [pincode],
+              });
+              this.selectedPlace.state = state;
+              this.selectedPlace.country = country;
+              this.selectedPlace.city = city;
+              this.selectedPlace.pincode = pincode;
+            }
+            // logic for pincode
             this.inputValue = option.description;
             this.showOptions = false;
           }
