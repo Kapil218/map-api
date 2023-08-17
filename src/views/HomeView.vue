@@ -6,8 +6,10 @@
       ref="autocompleteInput"
       v-model="inputValue"
       @input="handleInput"
+      @clear="clearInput"
       placeholder="Type a location..."
       class="autocomplete-input"
+      clearable
     />
 
     <ul v-if="showOptions" class="autocomplete-options">
@@ -50,6 +52,13 @@
         outlined
         class="output-input"
       />
+      <v-text-field
+        label="Area"
+        v-model="selectedPlace.area"
+        placeholder="Area"
+        outlined
+        class="output-input"
+      />
     </div>
   </div>
 </template>
@@ -60,11 +69,13 @@ export default {
     return {
       inputValue: "",
       autocompleteOptions: [],
+      savedPlaces: [],
       selectedPlace: {
         state: "",
         country: "",
         city: "",
         pincode: "",
+        area: "",
       },
       showOptions: false,
       autocompleteService: null,
@@ -78,6 +89,11 @@ export default {
     document.head.appendChild(script);
   },
   methods: {
+    clearInput() {
+      this.inputValue = "";
+      this.autocompleteOptions = [];
+      this.showOptions = false;
+    },
     initAutocomplete() {
       // Initialize Google Places Autocomplete service
       this.autocompleteService =
@@ -98,7 +114,10 @@ export default {
     },
     handlePredictions(predictions, status) {
       if (status === window.google.maps.places.PlacesServiceStatus.OK) {
-        this.autocompleteOptions = predictions;
+        this.autocompleteOptions = predictions.map((prediction) => ({
+          ...prediction,
+          description: prediction.description,
+        }));
         this.showOptions = true;
       } else {
         this.autocompleteOptions = [];
@@ -115,27 +134,70 @@ export default {
         },
         (place, status) => {
           if (status === window.google.maps.places.PlacesServiceStatus.OK) {
-            this.selectedPlace.state = this.extractAddressComponent(
+            const state = this.extractAddressComponent(
               place,
               "administrative_area_level_1"
             );
-            this.selectedPlace.country = this.extractAddressComponent(
-              place,
-              "country"
+            const country = this.extractAddressComponent(place, "country");
+            const city = this.extractAddressComponent(place, "locality");
+            const pincode = this.extractAddressComponent(place, "postal_code");
+            const area = this.extractAddressComponent(place, "sublocality");
+
+            // Check if the place already exists in the savedPlaces array
+            const existingPlace = this.savedPlaces.find(
+              (place) =>
+                place.state === state &&
+                place.country === country &&
+                place.city === city
             );
-            this.selectedPlace.city = this.extractAddressComponent(
-              place,
-              "locality"
-            );
-            this.selectedPlace.pincode = this.extractAddressComponent(
-              place,
-              "postal_code"
-            );
+            // logic for area
+            if (existingPlace) {
+              if (!existingPlace.areas.includes(area)) {
+                existingPlace.areas.push(area);
+                this.selectedPlace.area = existingPlace.areas.join(", ");
+              }
+            } else {
+              this.savedPlaces.push({
+                state,
+                country,
+                city,
+                pincodes: [pincode],
+                areas: [area],
+              });
+              this.selectedPlace.state = state;
+              this.selectedPlace.country = country;
+              this.selectedPlace.city = city;
+              this.selectedPlace.pincode = pincode;
+              this.selectedPlace.area = area;
+            }
+            // logic for area
+            // logic for pincode
+            if (existingPlace) {
+              if (!existingPlace.pincodes.includes(pincode)) {
+                existingPlace.pincodes.push(pincode);
+                this.selectedPlace.pincode = existingPlace.pincodes.join(", ");
+              }
+            } else {
+              this.savedPlaces.push({
+                state,
+                country,
+                city,
+                pincodes: [pincode],
+                areas: [area],
+              });
+              this.selectedPlace.state = state;
+              this.selectedPlace.country = country;
+              this.selectedPlace.city = city;
+              this.selectedPlace.pincode = pincode;
+              this.selectedPlace.area = area;
+            }
+            // logic for pincode
             this.inputValue = option.description;
             this.showOptions = false;
           }
         }
       );
+      console.log(this.selectedPlace);
     },
     extractAddressComponent(place, componentType) {
       const component = place.address_components.find((comp) =>
