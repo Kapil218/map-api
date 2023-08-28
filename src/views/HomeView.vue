@@ -84,7 +84,8 @@ export default {
   mounted() {
     // Load Google Places API script
     const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyAldn0pDQzYAGR5KQ4oMXFjqSgByWVzWvk&libraries=places`;
+    script.src =
+      "https://maps.googleapis.com/maps/api/js?key=AIzaSyAldn0pDQzYAGR5KQ4oMXFjqSgByWVzWvk&libraries=places";
     script.onload = this.initAutocomplete;
     document.head.appendChild(script);
   },
@@ -150,29 +151,12 @@ export default {
                 place.country === country &&
                 place.city === city
             );
-            // logic for area
+            // logic for area and pincode
             if (existingPlace) {
               if (!existingPlace.areas.includes(area)) {
                 existingPlace.areas.push(area);
                 this.selectedPlace.area = existingPlace.areas.join(", ");
               }
-            } else {
-              this.savedPlaces.push({
-                state,
-                country,
-                city,
-                pincodes: [pincode],
-                areas: [area],
-              });
-              this.selectedPlace.state = state;
-              this.selectedPlace.country = country;
-              this.selectedPlace.city = city;
-              this.selectedPlace.pincode = pincode;
-              this.selectedPlace.area = area;
-            }
-            // logic for area
-            // logic for pincode
-            if (existingPlace) {
               if (!existingPlace.pincodes.includes(pincode)) {
                 existingPlace.pincodes.push(pincode);
                 this.selectedPlace.pincode = existingPlace.pincodes.join(", ");
@@ -191,13 +175,12 @@ export default {
               this.selectedPlace.pincode = pincode;
               this.selectedPlace.area = area;
             }
-            // logic for pincode
+
             this.inputValue = option.description;
             this.showOptions = false;
           }
         }
       );
-      console.log(this.selectedPlace);
     },
     extractAddressComponent(place, componentType) {
       const component = place.address_components.find((comp) =>
